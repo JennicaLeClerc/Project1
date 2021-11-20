@@ -9,9 +9,11 @@ public class Driver {
     // Main driver method
     public static void main(String[] args) {
 
-        //SQLStringCreator.Testing(User.class);
-        SQLStringCreator.CreateTableString(User.class);
-        ListAll.ListAllAnnotatedMethods(User.class);
+        //ListAll.Testing(User.class);
+        //ListAll.ListAllAnnotatedMethods(User.class);
+
+        //SQLStringCreator.CreateTableString(User.class);
+        SQLStringCreator.AddRowString(User.class);
     }
 
 }

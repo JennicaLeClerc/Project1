@@ -3,9 +3,9 @@ package com.revature.persistence;
 public class GenericDao<T> {
 
     // Create Row for Class T
-    // If no Table exists for Class create one
     public void create(T t){
-
+        // Create Table Method
+        // Create Row Method
     }
 
     // Read... Get by ID
