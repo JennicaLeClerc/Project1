@@ -11,6 +11,7 @@ public class Driver {
 
         //SQLStringCreator.Testing(User.class);
         SQLStringCreator.StreamTest(User.class);
+        SQLStringCreator.ListAllAnnotatedMethods(User.class);
     }
 
 }

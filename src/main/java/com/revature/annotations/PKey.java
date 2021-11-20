@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Just lets the ClassInspector know that the Field is a Primary Key column.
+ * Notifies that the Field is a Primary Key column.
  *  - isSerial: Is the column Serializable? Default true.
  *  - isUnique: Is the column Unique? Default true.
  *  - isNotNull: Is the column Not Null? Default true.

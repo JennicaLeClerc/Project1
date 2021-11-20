@@ -1,10 +1,9 @@
 package com.revature.util;
 
-import com.revature.annotations.Column;
-import com.revature.annotations.PKey;
+import com.revature.annotations.*;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,7 +12,7 @@ public class SQLStringCreator {
      * Printing out all the fields and all the fields annotations to understand how to get everything.
      * @param clazz - Generic class
      */
-    public static void Testing(Class<?> clazz){
+    public static void ListAllFields(Class<?> clazz){
         System.out.println("Printing public fields of: " + clazz.getSimpleName());
         Field[] fields = clazz.getFields();
         if(fields.length == 0){
@@ -24,21 +23,44 @@ public class SQLStringCreator {
                 System.out.println("\tField type: " + field.getType().getSimpleName());
                 System.out.println("\tIs primitive?: " + field.getType().isPrimitive());
                 System.out.println("\tModifiers: " + field.getModifiers());
-                Annotation[] annotat = field.getDeclaredAnnotations();
-                for(Annotation annotation : annotat){
+                Annotation[] annotations = field.getDeclaredAnnotations();
+                for(Annotation annotation : annotations){
                     if(annotation instanceof PKey){
-                        PKey primarykey = (PKey)annotation;
-                        System.out.println("\t\tIsSerial: "+ primarykey.isSerial());
-                        System.out.println("\t\tIsUnique: "+ primarykey.isUnique());
-                        System.out.println("\t\tIsNotNull: "+ primarykey.isNotNull());
+                        System.out.println("\t\tIsSerial: "+ ((PKey) annotation).isSerial());
+                        System.out.println("\t\tIsUnique: "+ ((PKey) annotation).isUnique());
+                        System.out.println("\t\tIsNotNull: "+ ((PKey) annotation).isNotNull());
                     }
                     if(annotation instanceof Column){
-                        Column column = (Column)annotation;
-                        System.out.println("\t\tIsUnique: "+ column.isUnique());
-                        System.out.println("\t\tIsNotNull: "+ column.isNotNull());
+                        System.out.println("\t\tIsUnique: "+ ((Column) annotation).isUnique());
+                        System.out.println("\t\tIsNotNull: "+ ((Column) annotation).isNotNull());
                     }
                 }
                 System.out.println();
+            }
+        }
+    }
+
+    public static void ListAllAnnotatedMethods(Class<?> clazz){
+        System.out.println("Printing annotated methods of: " + clazz.getSimpleName());
+        Method[] methods = clazz.getMethods();
+        if(methods.length == 0){
+            System.out.println("\tThere are no annotated methods in: " + clazz.getSimpleName());
+        } else {
+            for(Method method: methods){
+                // Just getting those with annotations
+                if(Arrays.toString(method.getDeclaredAnnotations()) != "[]") {
+                    System.out.println("\tMethod name: " + method.getName());
+                    System.out.println("\tReturn type: " + method.getReturnType());
+
+                    Annotation[] annotations = method.getDeclaredAnnotations();
+                    for(Annotation annotation : annotations){
+                        if(annotation instanceof Getter){
+                            System.out.println("\tColumn Name: " + ((Getter) annotation).columnName());
+                            System.out.println("\tGetter Annotation");
+                        }
+                    }
+                    System.out.println();
+                }
             }
         }
     }

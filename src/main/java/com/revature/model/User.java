@@ -18,7 +18,7 @@ public class User {
     @Column
     public double phone_number;
     @Column
-    public boolean isAlive;
+    public boolean is_alive;
 
     public User() {
     }
@@ -31,6 +31,7 @@ public class User {
         this.last_name = last_name;
     }
 
+    @Getter(columnName = "user_id")
     public int getUser_id() {
         return user_id;
     }
@@ -40,6 +41,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "username")
     public String getUsername() {
         return username;
     }
@@ -49,6 +51,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "password")
     public String getPassword() {
         return password;
     }
@@ -58,6 +61,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "first_name")
     public String getFirst_name() {
         return first_name;
     }
@@ -67,6 +71,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "last_name")
     public String getLast_name() {
         return last_name;
     }
@@ -76,6 +81,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "age")
     public int getAge() {
         return age;
     }
@@ -85,6 +91,7 @@ public class User {
         return this;
     }
 
+    @Getter(columnName = "phone_number")
     public double getPhone_number() {
         return phone_number;
     }
@@ -94,12 +101,13 @@ public class User {
         return this;
     }
 
-    public boolean isAlive() {
-        return isAlive;
+    @Getter(columnName = "is_alive")
+    public boolean isIs_alive() {
+        return is_alive;
     }
 
-    public User setAlive(boolean alive) {
-        isAlive = alive;
+    public User setIs_alive(boolean is_alive) {
+        this.is_alive = is_alive;
         return this;
     }
 
@@ -113,7 +121,7 @@ public class User {
                 ", last_name='" + last_name + '\'' +
                 ", age=" + age +
                 ", phone_number=" + phone_number +
-                ", isAlive=" + isAlive +
+                ", isAlive=" + is_alive +
                 '}';
     }
 }
