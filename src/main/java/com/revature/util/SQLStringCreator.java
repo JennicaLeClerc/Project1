@@ -58,6 +58,10 @@ public class SQLStringCreator {
                             System.out.println("\tColumn Name: " + ((Getter) annotation).columnName());
                             System.out.println("\tGetter Annotation");
                         }
+                        if(annotation instanceof Setter){
+                            System.out.println("\tColumn Name: " + ((Setter) annotation).columnName());
+                            System.out.println("\tSetter Annotation");
+                        }
                     }
                     System.out.println();
                 }

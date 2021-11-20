@@ -36,6 +36,7 @@ public class User {
         return user_id;
     }
 
+    @Setter(columnName = "user_id")
     public User setUser_id(int user_id) {
         this.user_id = user_id;
         return this;
@@ -46,6 +47,7 @@ public class User {
         return username;
     }
 
+    @Setter(columnName = "username")
     public User setUsername(String username) {
         this.username = username;
         return this;
@@ -56,6 +58,7 @@ public class User {
         return password;
     }
 
+    @Setter(columnName = "password")
     public User setPassword(String password) {
         this.password = password;
         return this;
@@ -66,6 +69,7 @@ public class User {
         return first_name;
     }
 
+    @Setter(columnName = "first_name")
     public User setFirst_name(String first_name) {
         this.first_name = first_name;
         return this;
@@ -76,6 +80,7 @@ public class User {
         return last_name;
     }
 
+    @Setter(columnName = "last_name")
     public User setLast_name(String last_name) {
         this.last_name = last_name;
         return this;
@@ -86,6 +91,7 @@ public class User {
         return age;
     }
 
+    @Setter(columnName = "age")
     public User setAge(int age) {
         this.age = age;
         return this;
@@ -96,6 +102,7 @@ public class User {
         return phone_number;
     }
 
+    @Setter(columnName = "phone_number")
     public User setPhone_number(double phone_number) {
         this.phone_number = phone_number;
         return this;
@@ -106,6 +113,7 @@ public class User {
         return is_alive;
     }
 
+    @Setter(columnName = "is_alive")
     public User setIs_alive(boolean is_alive) {
         this.is_alive = is_alive;
         return this;
