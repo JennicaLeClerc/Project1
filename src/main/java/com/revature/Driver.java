@@ -10,8 +10,8 @@ public class Driver {
     public static void main(String[] args) {
 
         //SQLStringCreator.Testing(User.class);
-        SQLStringCreator.StreamTest(User.class);
-        SQLStringCreator.ListAllAnnotatedMethods(User.class);
+        SQLStringCreator.CreateTableString(User.class);
+        ListAll.ListAllAnnotatedMethods(User.class);
     }
 
 }

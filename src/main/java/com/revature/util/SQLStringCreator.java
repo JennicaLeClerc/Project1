@@ -9,73 +9,12 @@ import java.util.stream.Collectors;
 
 public class SQLStringCreator {
     /**
-     * Printing out all the fields and all the fields annotations to understand how to get everything.
-     * @param clazz - Generic class
-     */
-    public static void ListAllFields(Class<?> clazz){
-        System.out.println("Printing public fields of: " + clazz.getSimpleName());
-        Field[] fields = clazz.getFields();
-        if(fields.length == 0){
-            System.out.println("\tThere are no public fields in: " + clazz.getSimpleName());
-        } else {
-            for(Field field : fields){
-                System.out.println("\tField name: " + field.getName());
-                System.out.println("\tField type: " + field.getType().getSimpleName());
-                System.out.println("\tIs primitive?: " + field.getType().isPrimitive());
-                System.out.println("\tModifiers: " + field.getModifiers());
-                Annotation[] annotations = field.getDeclaredAnnotations();
-                for(Annotation annotation : annotations){
-                    if(annotation instanceof PKey){
-                        System.out.println("\t\tIsSerial: "+ ((PKey) annotation).isSerial());
-                        System.out.println("\t\tIsUnique: "+ ((PKey) annotation).isUnique());
-                        System.out.println("\t\tIsNotNull: "+ ((PKey) annotation).isNotNull());
-                    }
-                    if(annotation instanceof Column){
-                        System.out.println("\t\tIsUnique: "+ ((Column) annotation).isUnique());
-                        System.out.println("\t\tIsNotNull: "+ ((Column) annotation).isNotNull());
-                    }
-                }
-                System.out.println();
-            }
-        }
-    }
-
-    public static void ListAllAnnotatedMethods(Class<?> clazz){
-        System.out.println("Printing annotated methods of: " + clazz.getSimpleName());
-        Method[] methods = clazz.getMethods();
-        if(methods.length == 0){
-            System.out.println("\tThere are no annotated methods in: " + clazz.getSimpleName());
-        } else {
-            for(Method method: methods){
-                // Just getting those with annotations
-                if(Arrays.toString(method.getDeclaredAnnotations()) != "[]") {
-                    System.out.println("\tMethod name: " + method.getName());
-                    System.out.println("\tReturn type: " + method.getReturnType());
-
-                    Annotation[] annotations = method.getDeclaredAnnotations();
-                    for(Annotation annotation : annotations){
-                        if(annotation instanceof Getter){
-                            System.out.println("\tColumn Name: " + ((Getter) annotation).columnName());
-                            System.out.println("\tGetter Annotation");
-                        }
-                        if(annotation instanceof Setter){
-                            System.out.println("\tColumn Name: " + ((Setter) annotation).columnName());
-                            System.out.println("\tSetter Annotation");
-                        }
-                    }
-                    System.out.println();
-                }
-            }
-        }
-    }
-
-    /**
      * Creates an SQL string for a given class (clazz) to create a table for the given class. The class's name
      * (lower case) is used for the table name. Appends the correct SQL formatting for all fields with the PKey
      * and Column Annotations.
      * @param clazz - takes in any class
      */
-    public static void StreamTest(Class<?> clazz){
+    public static void CreateTableString(Class<?> clazz){
         System.out.println("Testing using Streams");
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder createCommand = new StringBuilder("create table if not exists " + table_name + "(\n");
@@ -107,33 +46,19 @@ public class SQLStringCreator {
         StringBuilder PKeyCreateCommand = new StringBuilder("");
         int counter = 0;
         for(Field f: PKeyFieldList) {
-            String PKeyName = f.getName();
-            System.out.println("\tPKey name: " + f.getName());
-            if(counter == 0){
-                PKeyCreateCommand.append("\t");
-            }else{
-                PKeyCreateCommand.append("\t,");
-            }
+            String PKeyName = f.getName().toLowerCase();
+            System.out.println("\tPKey name: " + PKeyName);
 
+            PKeyCreateCommand.append( counter == 0 ? "\t" : "\t," );
             PKeyCreateCommand.append(PKeyName);
 
             String dataType = DataType(f);
             Annotation[] PKeyAnnotation = f.getDeclaredAnnotations();
             for (Annotation annotation : PKeyAnnotation) {
                 PKey primarykey = (PKey) annotation;
-                boolean isSerial = primarykey.isSerial();
-                boolean isUnique = primarykey.isUnique();
-                boolean isNotNull = primarykey.isNotNull();
-                System.out.println("\t\tIsSerial: " + isSerial);
-                System.out.println("\t\tIsUnique: " + isUnique);
-                System.out.println("\t\tIsNotNull: " + isNotNull + "\n");
-                if(isSerial){
-                    PKeyCreateCommand.append(" serial");
-                }else{
-                    PKeyCreateCommand.append(dataType);
-                }
-                PKeyCreateCommand.append(Unique(isUnique));
-                PKeyCreateCommand.append(NotNull(isNotNull));
+                PKeyCreateCommand.append( primarykey.isSerial() ? " serial" : dataType );
+                PKeyCreateCommand.append( primarykey.isUnique() ? " unique" : "");
+                PKeyCreateCommand.append( primarykey.isNotNull() ? " not null" : "");
                 PKeyCreateCommand.append("\n");
                 counter++;
             }
@@ -153,26 +78,18 @@ public class SQLStringCreator {
         StringBuilder ColumnCreateCommand = new StringBuilder("");
         for(Field f: ColumnFieldList) {
             String ColumnName = f.getName().toLowerCase();
-            System.out.println("\tColumn name: " + f.getName());
+            System.out.println("\tColumn name: " + ColumnName);
 
-            if(number_PK > 0){
-                ColumnCreateCommand.append("\t,");
-            }else{
-                ColumnCreateCommand.append("\t");
-            }
+            ColumnCreateCommand.append( number_PK > 0 ? "\t," : "\t");
             ColumnCreateCommand.append(ColumnName);
 
             String dataType = DataType(f);
             Annotation[] ColumnAnnotation = f.getDeclaredAnnotations();
             for (Annotation annotation : ColumnAnnotation) {
                 Column column = (Column) annotation;
-                boolean isUnique = column.isUnique();
-                boolean isNotNull = column.isNotNull();
-                System.out.println("\t\tIsUnique: " + isUnique);
-                System.out.println("\t\tIsNotNull: " + isNotNull + "\n");
                 ColumnCreateCommand.append(dataType);
-                ColumnCreateCommand.append(Unique(isUnique));
-                ColumnCreateCommand.append(NotNull(isNotNull));
+                ColumnCreateCommand.append( column.isUnique() ? " unique" : "" );
+                ColumnCreateCommand.append( column.isNotNull() ? " not null" : "");
                 ColumnCreateCommand.append("\n");
             }
         }
@@ -194,29 +111,5 @@ public class SQLStringCreator {
             case "boolean": return  " boolean";
             default: return "";
         }
-    }
-
-    /**
-     * Returns a string if column has to be unique
-     * @param isUnique - does the column have to be unique?
-     * @return - if unique returns " unique" if not ""
-     */
-    public static String Unique(boolean isUnique){
-        if(isUnique){
-            return " unique";
-        }
-        return "";
-    }
-
-    /**
-     * Returns a string if column is unique
-     * @param isNotNull - is the column allowed to be null or not?
-     * @return - if not allowed to be null returns " not null" if not ""
-     */
-    public static String NotNull(boolean isNotNull){
-        if(isNotNull){
-            return " not null";
-        }
-        return "";
     }
 }
