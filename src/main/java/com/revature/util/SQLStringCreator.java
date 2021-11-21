@@ -66,6 +66,18 @@ public class SQLStringCreator {
     }
 
     /**
+     * Creates an SQL string for a generic class (clazz) to read all rows for a generic column with a specific value.
+     * @param clazz - takes in any class.
+     * @return - SQL statement to write out all rows for a generic column for a given class.
+     */
+    public static StringBuilder ReadString(Class<?> clazz){
+        String table_name = clazz.getSimpleName().toLowerCase() + "_table";
+        StringBuilder readCommand = new StringBuilder("select * from " + table_name + " where ?=?;");
+        System.out.println(readCommand);
+        return readCommand;
+    }
+
+    /**
      * Takes the Fields with PKey annotation and creates an SQL string for each Field. Puts the PKey name, data
      * type, and constraints in the correct SQL format for each Field. Returns the full SQL string for all fields in
      * PKey_FieldList.
