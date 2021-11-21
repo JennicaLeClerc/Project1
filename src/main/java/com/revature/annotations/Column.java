@@ -14,5 +14,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Column{
     boolean isUnique() default false;
-    boolean isNotNull() default true;
+    boolean isNotNull() default false;
 }

@@ -18,7 +18,7 @@ public class User {
     @Column
     public double phone_number;
     @Column
-    public boolean is_alive;
+    public boolean is_alive = true;
 
     public User() {
     }

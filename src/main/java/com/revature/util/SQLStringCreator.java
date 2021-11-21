@@ -18,7 +18,7 @@ public class SQLStringCreator {
      * @param clazz - takes in any class.
      * @return - SQL statement to create a table for the given class if one does not exist.
      */
-    public static StringBuilder CreateTableString(Class<?> clazz){
+    public static String CreateTableString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder createCommand = new StringBuilder("create table if not exists " + table_name + "(\n");
         //System.out.println("Table Name: " + table_name + "\n");
@@ -34,7 +34,7 @@ public class SQLStringCreator {
         createCommand.append(ColumnCreateCommand(ColumnFieldList, PKeyFieldList.size()));
         createCommand.append(");\n");
         System.out.println(createCommand);
-        return createCommand;
+        return String.valueOf(createCommand);
     }
 
     /**
@@ -43,7 +43,7 @@ public class SQLStringCreator {
      * @param clazz - takes in any class.
      * @return - SQL statement to add a row to a table for a given class.
      */
-    public static StringBuilder CreateRowString(Class<?> clazz){
+    public static String CreateRowString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder createCommand = new StringBuilder("insert into " + table_name + "(");
         //System.out.println("Table Name: " + table_name + "\n");
@@ -62,28 +62,36 @@ public class SQLStringCreator {
         createCommand.append(AddRowCommand(AllColumnsFieldList));
 
         System.out.println(createCommand);
-        return createCommand;
+        return String.valueOf(createCommand);
     }
 
     /**
-     * Creates an SQL string for a generic class (clazz) to read all rows for a generic column with a specific value.
+     * Creates an SQL string for a generic class (clazz) to get the row with the specific PKeys.
      * @param clazz - takes in any class.
      * @return - SQL statement to write out all rows for a generic column for a given class.
      */
-    public static StringBuilder ReadString(Class<?> clazz){
+    public static String ReadString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder readCommand = new StringBuilder("select * from " + table_name + " where ?=?;");
+        StringBuilder readCommand = new StringBuilder("select * from " + table_name + " ");
+
+        // Get all fields for the class
+        Field[] fields = clazz.getFields();
+
+        // Get all PKey and Column Field Annotations names from the class
+        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
+
+        readCommand.append(PKeyWhereCommand(PKeyFieldList));
         System.out.println(readCommand);
-        return readCommand;
+        return String.valueOf(readCommand);
     }
 
     /**
-     * Creates an SQL string for a generic class (clazz) to update all rows for the clazz's PKeys to those of the
+     * Creates an SQL string for a generic class (clazz) to update all rows with the specified PKeys to those of the
      * rest of the columns.
      * @param clazz - takes in any class
      * @return - SQL statement to update rows for the class's PKeys to the values in the Columns.
      */
-    public static StringBuilder UpdateString(Class<?> clazz){
+    public static String UpdateString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder updateCommand = new StringBuilder("update " + table_name + " set ");
 
@@ -94,13 +102,18 @@ public class SQLStringCreator {
         List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
 
         updateCommand.append(ColumnUpdateCommand(ColumnFieldList));
-        updateCommand.append(PKeyUpdateDeleteCommand(PKeyFieldList));
+        updateCommand.append(PKeyWhereCommand(PKeyFieldList));
 
         System.out.println(updateCommand);
-        return updateCommand;
+        return String.valueOf(updateCommand);
     }
 
-    public static StringBuilder DeleteString(Class<?> clazz){
+    /**
+     * Creates an SQL string for a generic class (clazz) to delete all rows with the specified PKeys.
+     * @param clazz - takes in any class
+     * @return - SQL statement to delete rows for the class's PKeys
+     */
+    public static String DeleteString(Class<?> clazz){
         // DELETE FROM table_name WHERE condition;
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder deleteCommand = new StringBuilder("delete from " + table_name + " ");
@@ -109,10 +122,10 @@ public class SQLStringCreator {
 
         // Creates Array of Fields that have PKey and Column annotations
         List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-        deleteCommand.append(PKeyUpdateDeleteCommand(PKeyFieldList));
+        deleteCommand.append(PKeyWhereCommand(PKeyFieldList));
 
         System.out.println(deleteCommand);
-        return deleteCommand;
+        return String.valueOf(deleteCommand);
     }
 
     /**
@@ -178,24 +191,39 @@ public class SQLStringCreator {
 
     /**
      * Takes the Fields with PKey and Column Annotation and creates an SQL string for each Field. Puts the Column name,
-     * and number of question marks in the correct format for all fields in AllColumnsFieldList.
+     * and number of question marks in the correct format for all fields in AllColumnsFieldList. Does not include PKeys
+     * that are serial since SQL takes care of those.
      * @param AllColumnsFieldList - List of all Fields with the Column and PKey Annotation.
      * @return - SQL sting for all Columns (PKey and Column Annotations) for a row to be created.
      */
     public static StringBuilder AddRowCommand(List<Field> AllColumnsFieldList){
         StringBuilder createCommand = new StringBuilder();
         int totalColumns = AllColumnsFieldList.size();
+        int totalColumnsQMarks = AllColumnsFieldList.size();
 
         for(Field f: AllColumnsFieldList) {
             String ColumnName = f.getName().toLowerCase();
+            boolean isSerial = false;
             //System.out.println("\tField : " + ColumnName);
-            createCommand.append(ColumnName);
-            createCommand.append( totalColumns > 1 ? ", " : ") values(?" );
+
+            // if PKey is serial we don't set that number...
+            Annotation[] annotations = f.getDeclaredAnnotations();
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof PKey) {
+                    isSerial = ((PKey) annotation).isSerial();
+                    // if it is serial, we don't set that number than we need one less ?
+                }
+            }
+            if(isSerial){
+                totalColumnsQMarks--;
+            }else {
+                createCommand.append(ColumnName);
+                createCommand.append(totalColumns > 1 ? ", " : ") values(?");
+            }
             totalColumns--;
         }
 
-        totalColumns = AllColumnsFieldList.size();
-        for(int i = 1; i < totalColumns; i++){
+        for(int i = 1; i < totalColumnsQMarks; i++){
             createCommand.append(",?");
         }
         createCommand.append(");");
@@ -227,7 +255,7 @@ public class SQLStringCreator {
      * @param PKeyFieldList - List of all Fields with the PKey Annotation
      * @return - SQL string for all PKey Annotations for a row to be updated
      */
-    public static StringBuilder PKeyUpdateDeleteCommand(List<Field> PKeyFieldList){
+    public static StringBuilder PKeyWhereCommand(List<Field> PKeyFieldList){
         StringBuilder updateCommand = new StringBuilder("where ");
         int totalColumns = PKeyFieldList.size();
         for(Field f: PKeyFieldList){
