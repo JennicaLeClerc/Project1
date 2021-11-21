@@ -14,7 +14,8 @@ public class Driver {
 
         //SQLStringCreator.CreateTableString(User.class);
         //SQLStringCreator.AddRowString(User.class);
-        SQLStringCreator.ReadString(User.class);
+        //SQLStringCreator.ReadString(User.class);
+        SQLStringCreator.UpdateString(User.class);
     }
 
 }

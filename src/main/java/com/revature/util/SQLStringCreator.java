@@ -30,8 +30,8 @@ public class SQLStringCreator {
         List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
 
         // Appends all Primary Keys and the rest of the Columns to command
-        createCommand.append(PKeyCommand(PKeyFieldList));
-        createCommand.append(ColumnCommand(ColumnFieldList, PKeyFieldList.size()));
+        createCommand.append(PKeyCreateCommand(PKeyFieldList));
+        createCommand.append(ColumnCreateCommand(ColumnFieldList, PKeyFieldList.size()));
         createCommand.append(");\n");
         System.out.println(createCommand);
         return createCommand;
@@ -78,34 +78,57 @@ public class SQLStringCreator {
     }
 
     /**
+     * Creates an SQL string for a generic class (clazz) to update all rows for the clazz's PKeys to those of the
+     * rest of the columns.
+     * @param clazz - takes in any class
+     * @return - SQL statement to update rows for the class's PKeys to the values in the Columns.
+     */
+    public static StringBuilder UpdateString(Class<?> clazz){
+        String table_name = clazz.getSimpleName().toLowerCase() + "_table";
+        StringBuilder updateCommand = new StringBuilder("update " + table_name + " set ");
+
+        Field[] fields = clazz.getFields();
+
+        // Creates Array of Fields that have PKey and Column annotations
+        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
+        List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
+
+        updateCommand.append(ColumnUpdateCommand(ColumnFieldList));
+        updateCommand.append(PKeyUpdateCommand(PKeyFieldList));
+
+        System.out.println(updateCommand);
+        return updateCommand;
+    }
+
+    /**
      * Takes the Fields with PKey annotation and creates an SQL string for each Field. Puts the PKey name, data
      * type, and constraints in the correct SQL format for each Field. Returns the full SQL string for all fields in
      * PKey_FieldList.
      * @param PKeyFieldList - List of the Fields with the PKey Annotation.
      * @return - SQL string for all PKey Annotation Fields for a table to be created.
      */
-    public static StringBuilder PKeyCommand(List<Field> PKeyFieldList){
-        StringBuilder PKeyCreateCommand = new StringBuilder();
+    public static StringBuilder PKeyCreateCommand(List<Field> PKeyFieldList){
+        StringBuilder createCommand = new StringBuilder();
         int counter = 0;
         for(Field f: PKeyFieldList) {
             String PKeyName = f.getName().toLowerCase();
             System.out.println("\tPKey name: " + PKeyName);
 
-            PKeyCreateCommand.append( counter == 0 ? "\t" : "\t," );
-            PKeyCreateCommand.append(PKeyName);
+            createCommand.append( counter == 0 ? "\t" : "\t," );
+            createCommand.append(PKeyName);
 
             String dataType = DataType(f);
             Annotation[] PKeyAnnotation = f.getDeclaredAnnotations();
             for (Annotation annotation : PKeyAnnotation) {
                 PKey primarykey = (PKey) annotation;
-                PKeyCreateCommand.append( primarykey.isSerial() ? " serial" : dataType );
-                PKeyCreateCommand.append( primarykey.isUnique() ? " unique" : "");
-                PKeyCreateCommand.append( primarykey.isNotNull() ? " not null" : "");
-                PKeyCreateCommand.append("\n");
+                createCommand.append( primarykey.isSerial() ? " serial" : dataType );
+                createCommand.append( primarykey.isUnique() ? " unique" : "");
+                createCommand.append( primarykey.isNotNull() ? " not null" : "");
+                createCommand.append("\n");
                 counter++;
             }
         }
-        return PKeyCreateCommand;
+        return createCommand;
     }
 
     /**
@@ -116,26 +139,26 @@ public class SQLStringCreator {
      * @param number_PK - The number of Primary Keys.
      * @return - SQL string for all Column Annotation Fields for a table to be created.
      */
-    public static StringBuilder ColumnCommand(List<Field> ColumnFieldList, int number_PK){
-        StringBuilder ColumnCreateCommand = new StringBuilder();
+    public static StringBuilder ColumnCreateCommand(List<Field> ColumnFieldList, int number_PK){
+        StringBuilder createCommand = new StringBuilder();
         for(Field f: ColumnFieldList) {
             String ColumnName = f.getName().toLowerCase();
             System.out.println("\tColumn name: " + ColumnName);
 
-            ColumnCreateCommand.append( number_PK > 0 ? "\t," : "\t");
-            ColumnCreateCommand.append(ColumnName);
+            createCommand.append( number_PK > 0 ? "\t," : "\t");
+            createCommand.append(ColumnName);
 
             String dataType = DataType(f);
             Annotation[] ColumnAnnotation = f.getDeclaredAnnotations();
             for (Annotation annotation : ColumnAnnotation) {
                 Column column = (Column) annotation;
-                ColumnCreateCommand.append(dataType);
-                ColumnCreateCommand.append( column.isUnique() ? " unique" : "" );
-                ColumnCreateCommand.append( column.isNotNull() ? " not null" : "");
-                ColumnCreateCommand.append("\n");
+                createCommand.append(dataType);
+                createCommand.append( column.isUnique() ? " unique" : "" );
+                createCommand.append( column.isNotNull() ? " not null" : "");
+                createCommand.append("\n");
             }
         }
-        return ColumnCreateCommand;
+        return createCommand;
     }
 
     /**
@@ -162,6 +185,42 @@ public class SQLStringCreator {
         }
         createCommand.append(");");
         return createCommand;
+    }
+
+    /**
+     * Takes the Fields with Column Annotation and creates an SQL string for each Field. Puts the column name in the
+     * correct format so that their info is updated.
+     * @param ColumnFieldList - List of all Fields with the Column Annotation
+     * @return - SQL string for all Column Annotations for a row to be updated
+     */
+    public static StringBuilder ColumnUpdateCommand(List<Field> ColumnFieldList){
+        StringBuilder updateCommand = new StringBuilder();
+        int totalColumns = ColumnFieldList.size();
+        for(Field f: ColumnFieldList){
+            String columnName = f.getName().toLowerCase();
+            updateCommand.append(columnName + "=?");
+            updateCommand.append( totalColumns > 1 ? ", " : " " );
+            totalColumns--;
+        }
+        return updateCommand;
+    }
+
+    /**
+     * Takes the Fields with PKey Annotation and creates an SQL string for ech Field. Puts the column name into the
+     * correct format so that their info is the condition for the update.
+     * @param PKeyFieldList - List of all Fields with the PKey Annotation
+     * @return - SQL string for all PKey Annotations for a row to be updated
+     */
+    public static StringBuilder PKeyUpdateCommand(List<Field> PKeyFieldList){
+        StringBuilder updateCommand = new StringBuilder("where ");
+        int totalColumns = PKeyFieldList.size();
+        for(Field f: PKeyFieldList){
+            String columnName = f.getName().toLowerCase();
+            updateCommand.append(columnName + "=?");
+            updateCommand.append( totalColumns > 1 ? "and " : ";" );
+            totalColumns--;
+        }
+        return updateCommand;
     }
 
     /**
