@@ -43,7 +43,7 @@ public class SQLStringCreator {
      * @param clazz - takes in any class.
      * @return - SQL statement to add a row to a table for a given class.
      */
-    public static StringBuilder AddRowString(Class<?> clazz){
+    public static StringBuilder CreateRowString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder createCommand = new StringBuilder("insert into " + table_name + "(");
         //System.out.println("Table Name: " + table_name + "\n");
@@ -127,7 +127,7 @@ public class SQLStringCreator {
         int counter = 0;
         for(Field f: PKeyFieldList) {
             String PKeyName = f.getName().toLowerCase();
-            System.out.println("\tPKey name: " + PKeyName);
+            //System.out.println("\tPKey name: " + PKeyName);
 
             createCommand.append( counter == 0 ? "\t" : "\t," );
             createCommand.append(PKeyName);
@@ -158,7 +158,7 @@ public class SQLStringCreator {
         StringBuilder createCommand = new StringBuilder();
         for(Field f: ColumnFieldList) {
             String ColumnName = f.getName().toLowerCase();
-            System.out.println("\tColumn name: " + ColumnName);
+            //System.out.println("\tColumn name: " + ColumnName);
 
             createCommand.append( number_PK > 0 ? "\t," : "\t");
             createCommand.append(ColumnName);
@@ -246,7 +246,7 @@ public class SQLStringCreator {
      */
     public static String DataType(Field field){
         String fieldType = field.getType().getSimpleName();
-        System.out.println("\t\tData Type: " + fieldType);
+        //System.out.println("\t\tData Type: " + fieldType);
         switch(fieldType){
             case "int": return " int";
             case "double": return " numeric";

@@ -2,6 +2,7 @@ package com.revature;
 
 import com.revature.model.User;
 import com.revature.util.*;
+import com.revature.persistence.*;
 
 // Main class
 public class Driver {
@@ -13,10 +14,11 @@ public class Driver {
         //ListAll.ListAllAnnotatedMethods(User.class);
 
         //SQLStringCreator.CreateTableString(User.class);
-        //SQLStringCreator.AddRowString(User.class);
+        //SQLStringCreator.CreateRowString(User.class);
         //SQLStringCreator.ReadString(User.class);
         //SQLStringCreator.UpdateString(User.class);
         //SQLStringCreator.DeleteString(User.class);
+        GenericDao.createTable(User.class);
     }
 
 }

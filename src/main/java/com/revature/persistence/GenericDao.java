@@ -1,26 +1,43 @@
 package com.revature.persistence;
 
-public class GenericDao<T> {
+import com.revature.util.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class GenericDao {
+
+    // Create Table for Class T
+    public static void createTable(Class<?> clazz){
+        // Create Table Method
+        StringBuilder createTable = SQLStringCreator.CreateTableString(clazz);
+        try(Connection connection = ConnectionCreator.getInstance()) {
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(String.valueOf(createTable));
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     // Create Row for Class T
-    public void create(T t){
+    public static void createRow(Class<?> clazz){
         // Create Table Method
+        createTable(clazz);
         // Create Row Method
+        StringBuilder createRow = SQLStringCreator.CreateRowString(clazz);
     }
 
-    // Read... Get by ID
-    public T getByID(T t){
-        T output = null;
-        return output;
-    }
+    // Read in GenericGetDao
 
     // Update
-    public void update(T t){
+    public static void update(Class<?> clazz){
 
     }
 
     // Delete
-    public void deleteByID(T t){
+    public static void deleteByID(Class<?> clazz){
 
     }
 
