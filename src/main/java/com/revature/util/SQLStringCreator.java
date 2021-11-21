@@ -94,10 +94,25 @@ public class SQLStringCreator {
         List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
 
         updateCommand.append(ColumnUpdateCommand(ColumnFieldList));
-        updateCommand.append(PKeyUpdateCommand(PKeyFieldList));
+        updateCommand.append(PKeyUpdateDeleteCommand(PKeyFieldList));
 
         System.out.println(updateCommand);
         return updateCommand;
+    }
+
+    public static StringBuilder DeleteString(Class<?> clazz){
+        // DELETE FROM table_name WHERE condition;
+        String table_name = clazz.getSimpleName().toLowerCase() + "_table";
+        StringBuilder deleteCommand = new StringBuilder("delete from " + table_name + " ");
+
+        Field[] fields = clazz.getFields();
+
+        // Creates Array of Fields that have PKey and Column annotations
+        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
+        deleteCommand.append(PKeyUpdateDeleteCommand(PKeyFieldList));
+
+        System.out.println(deleteCommand);
+        return deleteCommand;
     }
 
     /**
@@ -207,11 +222,12 @@ public class SQLStringCreator {
 
     /**
      * Takes the Fields with PKey Annotation and creates an SQL string for ech Field. Puts the column name into the
-     * correct format so that their info is the condition for the update.
+     * correct format so that their info is the condition for the update. This is also the correct format for Deletion
+     * based on the PKeys.
      * @param PKeyFieldList - List of all Fields with the PKey Annotation
      * @return - SQL string for all PKey Annotations for a row to be updated
      */
-    public static StringBuilder PKeyUpdateCommand(List<Field> PKeyFieldList){
+    public static StringBuilder PKeyUpdateDeleteCommand(List<Field> PKeyFieldList){
         StringBuilder updateCommand = new StringBuilder("where ");
         int totalColumns = PKeyFieldList.size();
         for(Field f: PKeyFieldList){
