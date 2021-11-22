@@ -37,54 +37,25 @@ public class GenericDao<T>{
     public void createRow(T clazz){
         // Create Table, if doesn't exist
         createTable(clazz);
+        PreparedStatement stmt = null;
 
         // Creates SQL generic string
         // Just assuming PKeys are serializable
         String createRow = SQLStringCreator.CreateRowString(clazz.getClass());
         try(Connection connection = ConnectionCreator.getInstance()){
+            stmt = connection.prepareStatement(createRow);
             assert connection != null;
-            PreparedStatement stmt = connection.prepareStatement(createRow);
 
-            // Get all fields for the class
-            Field[] fields = clazz.getClass().getFields();
-
-            // Get all PKey and Column Field Annotations names from the class
-            List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-            List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
-            List<Field> AColumnFieldList = new ArrayList<>();
-            AColumnFieldList.addAll(PKeyFieldList);
-            AColumnFieldList.addAll(ColumnFieldList);
-
-            int index = 1;
-            for(Field f: AColumnFieldList) {
-                String columnName = f.getName().toLowerCase();
-                boolean isSerial = false;
-                //System.out.println("\tField : " + columnName);
-
-                // if PKey is serial we don't set that number...
-                Annotation[] annotations = f.getDeclaredAnnotations();
-                for (Annotation annotation : annotations) {
-                    if (annotation instanceof PKey) {
-                        isSerial = ((PKey) annotation).isSerial();
-                    }
-                }
-                System.out.println(isSerial);
-                if(!isSerial){
-                    stmt = InputValues(stmt, clazz, columnName, index);
-                    index ++;
-                }
-            }
-            System.out.println(stmt);
-
+            stmt = RowPrepStatement(clazz, stmt);
             stmt.executeUpdate();
         }catch (Exception e){
             e.printStackTrace();
         }
-
+        System.out.println(stmt);
     }
 
     // Read... Get by PKey
-    public T getByPKey(T clazz){
+    public T Read(T clazz){
         String Read = SQLStringCreator.ReadString(clazz.getClass());
         T retrieving = null;
         try(Connection connection = ConnectionCreator.getInstance()){
@@ -108,6 +79,32 @@ public class GenericDao<T>{
     public void delete(T clazz){
         String Delete = SQLStringCreator.DeleteString(clazz.getClass());
         // Does PKey
+    }
+
+    public PreparedStatement RowPrepStatement(T clazz, PreparedStatement stmt){
+        List<Field> AColumnFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
+
+        int index = 1;
+        for(Field f: AColumnFieldList) {
+            String columnName = f.getName().toLowerCase();
+            boolean isSerial = false;
+            //System.out.println("\tField : " + columnName);
+
+            // if PKey is serial we don't set that number...
+            Annotation[] annotations = f.getDeclaredAnnotations();
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof PKey) {
+                    isSerial = ((PKey) annotation).isSerial();
+                }
+            }
+            System.out.println(isSerial);
+            if(!isSerial){
+                stmt = InputValues(stmt, clazz, columnName, index);
+                index ++;
+            }
+        }
+        return stmt;
+
     }
 
     public PreparedStatement InputValues(PreparedStatement stmt, T clazz, String name, int index){

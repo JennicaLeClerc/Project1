@@ -1,6 +1,7 @@
 package com.revature.util;
 
 import com.revature.annotations.*;
+import com.revature.util.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -23,11 +24,9 @@ public class SQLStringCreator {
         StringBuilder createCommand = new StringBuilder("create table if not exists " + table_name + "(\n");
         //System.out.println("Table Name: " + table_name + "\n");
 
-        Field[] fields = clazz.getFields();
-
         // Creates Array of Fields that have PKey and Column annotations
-        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-        List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
+        List<Field> PKeyFieldList = CreateFieldLists.PKeyFieldList(clazz);
+        List<Field> ColumnFieldList = CreateFieldLists.ColumnFieldList(clazz);
 
         // Appends all Primary Keys and the rest of the Columns to command
         createCommand.append(PKeyCreateCommand(PKeyFieldList));
@@ -48,18 +47,8 @@ public class SQLStringCreator {
         StringBuilder createCommand = new StringBuilder("insert into " + table_name + "(");
         //System.out.println("Table Name: " + table_name + "\n");
 
-        // Get all fields for the class
-        Field[] fields = clazz.getFields();
-
-        // Get all PKey and Column Field Annotations names from the class
-        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-        List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
-        List<Field> AllColumnsFieldList = new ArrayList<>();
-        AllColumnsFieldList.addAll(PKeyFieldList);
-        AllColumnsFieldList.addAll(ColumnFieldList);
-
         // Appends field names and amount in values(?,?,....) in correct format
-        createCommand.append(AddRowCommand(AllColumnsFieldList));
+        createCommand.append(AddRowCommand(CreateFieldLists.AllColumnsFieldList(clazz)));
 
         System.out.println(createCommand);
         return String.valueOf(createCommand);
@@ -74,13 +63,7 @@ public class SQLStringCreator {
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder readCommand = new StringBuilder("select * from " + table_name + " ");
 
-        // Get all fields for the class
-        Field[] fields = clazz.getFields();
-
-        // Get all PKey and Column Field Annotations names from the class
-        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-
-        readCommand.append(PKeyWhereCommand(PKeyFieldList));
+        readCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
         System.out.println(readCommand);
         return String.valueOf(readCommand);
     }
@@ -95,14 +78,8 @@ public class SQLStringCreator {
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder updateCommand = new StringBuilder("update " + table_name + " set ");
 
-        Field[] fields = clazz.getFields();
-
-        // Creates Array of Fields that have PKey and Column annotations
-        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-        List<Field> ColumnFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(Column.class)).collect(Collectors.toList());
-
-        updateCommand.append(ColumnUpdateCommand(ColumnFieldList));
-        updateCommand.append(PKeyWhereCommand(PKeyFieldList));
+        updateCommand.append(ColumnUpdateCommand(CreateFieldLists.ColumnFieldList(clazz)));
+        updateCommand.append(PKeyWhereCommand(CreateFieldLists.ColumnFieldList(clazz)));
 
         System.out.println(updateCommand);
         return String.valueOf(updateCommand);
@@ -118,11 +95,7 @@ public class SQLStringCreator {
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder deleteCommand = new StringBuilder("delete from " + table_name + " ");
 
-        Field[] fields = clazz.getFields();
-
-        // Creates Array of Fields that have PKey and Column annotations
-        List<Field> PKeyFieldList = Arrays.stream(fields).filter(field -> field.isAnnotationPresent(PKey.class)).collect(Collectors.toList());
-        deleteCommand.append(PKeyWhereCommand(PKeyFieldList));
+        deleteCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
 
         System.out.println(deleteCommand);
         return String.valueOf(deleteCommand);
