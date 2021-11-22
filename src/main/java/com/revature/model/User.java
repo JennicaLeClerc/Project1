@@ -7,7 +7,7 @@ public class User {
 
     @Column(isUnique = true)
     public String username;
-    @Column(isUnique = true)
+    @Column
     public String password;
     @Column
     public String first_name;
@@ -31,7 +31,6 @@ public class User {
         this.last_name = last_name;
     }
 
-    @Getter(columnName = "user_id")
     public int getUser_id() {
         return user_id;
     }
@@ -42,7 +41,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "username")
     public String getUsername() {
         return username;
     }
@@ -53,7 +51,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "password")
     public String getPassword() {
         return password;
     }
@@ -64,7 +61,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "first_name")
     public String getFirst_name() {
         return first_name;
     }
@@ -75,7 +71,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "last_name")
     public String getLast_name() {
         return last_name;
     }
@@ -86,7 +81,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "age")
     public int getAge() {
         return age;
     }
@@ -97,7 +91,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "phone_number")
     public double getPhone_number() {
         return phone_number;
     }
@@ -108,7 +101,6 @@ public class User {
         return this;
     }
 
-    @Getter(columnName = "is_alive")
     public boolean isIs_alive() {
         return is_alive;
     }

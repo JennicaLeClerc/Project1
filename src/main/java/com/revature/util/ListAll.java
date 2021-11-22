@@ -1,13 +1,10 @@
 package com.revature.util;
 
 import com.revature.annotations.Column;
-import com.revature.annotations.Getter;
 import com.revature.annotations.PKey;
-import com.revature.annotations.Setter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 public class ListAll {
@@ -49,7 +46,7 @@ public class ListAll {
      * Printing out all the methods that have annotations and the annotation details.
      * @param clazz - Generic class
      */
-    public static void ListAllAnnotatedMethods(Class<?> clazz){
+    /*public static void ListAllAnnotatedMethods(Class<?> clazz){
         System.out.println("Printing annotated methods of: " + clazz.getSimpleName());
         Method[] methods = clazz.getMethods();
         if(methods.length == 0){
@@ -76,5 +73,5 @@ public class ListAll {
                 }
             }
         }
-    }
+    }*/
 }

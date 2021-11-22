@@ -10,7 +10,7 @@ public class Driver {
     // Main driver method
     public static void main(String[] args) {
         User user = new User();
-        user.setUsername("12345");
+        user.setUsername("new12345");
         user.setPassword("Password");
         user.setPhone_number(1234251233);
         user.setAge(12);

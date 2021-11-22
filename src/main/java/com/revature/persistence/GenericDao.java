@@ -97,7 +97,6 @@ public class GenericDao<T>{
                     isSerial = ((PKey) annotation).isSerial();
                 }
             }
-            System.out.println(isSerial);
             if(!isSerial){
                 stmt = InputValues(stmt, clazz, columnName, index);
                 index ++;
