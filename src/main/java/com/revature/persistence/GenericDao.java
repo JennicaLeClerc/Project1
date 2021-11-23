@@ -104,9 +104,20 @@ public class GenericDao<T>{
 
     // Update
     public void update(T t){
+        //String sql = "update users set username=?, password=? where account_no=?";
         String Update = SQLStringCreator.UpdateString(t.getClass());
-        // Does Columns first
-        // Does PKey second
+        // Does the same thing as Create Row for input info for all before where
+        try(Connection connection = ConnectionCreator.getInstance()){
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(Update);
+            stmt = RowPrepStatement(t, stmt);
+            stmt.executeUpdate();
+            System.out.println(stmt);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        // Does the PKeys next (after where)
     }
 
     /**
@@ -137,10 +148,10 @@ public class GenericDao<T>{
      * @return - The Prepared Statement with the values inserted into where question marks were before.
      */
     public PreparedStatement RowPrepStatement(T t, PreparedStatement stmt){
-        List<Field> AColumnFieldList = CreateFieldLists.AllColumnsFieldList(t.getClass());
+        List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(t.getClass());
 
         int index = 1;
-        for(Field f: AColumnFieldList) {
+        for(Field f: AllColumnsFieldList) {
             String columnName = f.getName().toLowerCase();
             boolean isSerial = false;
 
@@ -156,7 +167,11 @@ public class GenericDao<T>{
             }
         }
         return stmt;
+    }
 
+    public PreparedStatement UpdatePrepStatement(T t, PreparedStatement stmt){
+        List<Field> ColumnFieldList = CreateFieldLists.ColumnFieldList(t.getClass());
+        return stmt;
     }
 
     /**
@@ -180,7 +195,7 @@ public class GenericDao<T>{
         try {
             switch (fieldType) {
                 case "int":
-                    stmt.setInt(index, (int) field.get(t.getClass()));
+                    stmt.setInt(index, (int) field.get(t));
                     break;
                 case "double":
                     stmt.setDouble(index, (double) field.get(t));
