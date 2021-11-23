@@ -76,6 +76,7 @@ public class GenericDao<T>{
     }
 
     /**
+     * Read
      * @param clazz - Any generic class.
      * @param ids - List of ids of all PKeys in class.
      * @return - An instance of a generic class in the database with the specified PKeys of value ids.
@@ -91,7 +92,6 @@ public class GenericDao<T>{
             }
             System.out.println(stmt);
             ResultSet rs = stmt.executeQuery();
-            System.out.println(rs.toString());
             if(rs.next()){
                 retrieving = SetValues(rs, clazz);
             }
@@ -102,22 +102,22 @@ public class GenericDao<T>{
         return retrieving;
     }
 
-    // Update
+    /**
+     * For the given instance of a generic class "t", an SQL statement is created such that the database for the
+     * instance is updated based on its PKeys.
+     * @param t - Any instance of a generic class.
+     */
     public void update(T t){
-        //String sql = "update users set username=?, password=? where account_no=?";
         String Update = SQLStringCreator.UpdateString(t.getClass());
-        // Does the same thing as Create Row for input info for all before where
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Update);
-            stmt = RowPrepStatement(t, stmt);
+            stmt = UpdatePrepStatement(t, stmt);
             stmt.executeUpdate();
             System.out.println(stmt);
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        // Does the PKeys next (after where)
     }
 
     /**
@@ -144,8 +144,8 @@ public class GenericDao<T>{
      * Gives the completed SQL Prepared Statement to create a row for the instance "t" of a generic class. If the
      * PKey is serial we do not want to have those values inputted into the database so those are skipped.
      * @param t - Any instance of a generic class.
-     * @param stmt - The prepared statement to create a row in for the generic class of t.
-     * @return - The Prepared Statement with the values inserted into where question marks were before.
+     * @param stmt - The prepared statement to create a row in the database for the generic class of t.
+     * @return - The Prepared Statement to create a row with the values inserted into where question marks were before.
      */
     public PreparedStatement RowPrepStatement(T t, PreparedStatement stmt){
         List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(t.getClass());
@@ -169,18 +169,36 @@ public class GenericDao<T>{
         return stmt;
     }
 
+    /**
+     *
+     * @param t - Any instance of a generic class.
+     * @param stmt - The prepared statement to update a row in the database for the generic class of t.
+     * @return - The Prepared Statement with all question marks before the where changed to the corresponding values
+     *           from the Column Fields and all after corresponding values from the PKey Fields.
+     */
     public PreparedStatement UpdatePrepStatement(T t, PreparedStatement stmt){
-        List<Field> ColumnFieldList = CreateFieldLists.ColumnFieldList(t.getClass());
+        Class<?> tClass = t.getClass();
+        List<Field> ColumnFieldList = CreateFieldLists.ColumnFieldList(tClass);
+        List<Field> PKeyFieldList = CreateFieldLists.PKeyFieldList(tClass);
+        int index = 1;
+        for(Field f: ColumnFieldList){
+            stmt = InputValues(stmt, t, f.getName().toLowerCase(), index);
+            index++;
+        }
+        for(Field f: PKeyFieldList){
+            stmt = InputValues(stmt, t, f.getName().toLowerCase(), index);
+            index++;
+        }
         return stmt;
     }
 
     /**
-     * @param stmt - Prepared Statement to create a row.
+     * @param stmt - Prepared Statement to create a row in the database.
      * @param t - Any instance of a generic class.
      * @param name - Column name in the generic class.
      * @param index - Index of Prepared Statement Question Mark.
-     * @return - returns the Prepared statement with the value of t for column of name "name" replacing the
-     *           question mark at index "index".
+     * @return - Returns the Prepared statement with the value of t for column of name "name" replacing the
+     *           question mark at index "index" to create a row.
      */
     public PreparedStatement InputValues(PreparedStatement stmt, T t, String name, int index){
         Field field = null;
