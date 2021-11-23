@@ -8,6 +8,7 @@ import java.util.*;
 
 // Main class
 public class Driver {
+    static GenericDao genericDao = new GenericDao();
 
     // Main driver method
     public static void main(String[] args) {
@@ -28,13 +29,10 @@ public class Driver {
         SQLStringCreator.UpdateString(User.class);
         SQLStringCreator.DeleteString(User.class);
 
-        final GenericDao genericDao = new GenericDao();
-
         //genericDao.createRow(user);
         List<Integer> list = Arrays.asList(3);
         //genericDao.delete(user, list);
-        genericDao.Read(user);
-        genericDao.ReadByPKey(user,list);
+        genericDao.Read(User.class);
+        genericDao.ReadByPKey(User.class,list);
     }
-
 }

@@ -1,12 +1,10 @@
 package com.revature.util;
 
 import com.revature.annotations.*;
-import com.revature.util.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Creates the CRUD operation SQL Strings for a generic class.
@@ -21,19 +19,15 @@ public class SQLStringCreator {
      */
     public static String CreateTableString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder createCommand = new StringBuilder("create table if not exists " + table_name + "(\n");
-        //System.out.println("Table Name: " + table_name + "\n");
 
         // Creates Array of Fields that have PKey and Column annotations
         List<Field> PKeyFieldList = CreateFieldLists.PKeyFieldList(clazz);
         List<Field> ColumnFieldList = CreateFieldLists.ColumnFieldList(clazz);
 
         // Appends all Primary Keys and the rest of the Columns to command
-        createCommand.append(PKeyCreateCommand(PKeyFieldList));
-        createCommand.append(ColumnCreateCommand(ColumnFieldList, PKeyFieldList.size()));
-        createCommand.append(");");
-        System.out.println(createCommand);
-        return String.valueOf(createCommand);
+        return "create table if not exists " + table_name + "(\n"
+                + PKeyCreateCommand(PKeyFieldList)
+                + ColumnCreateCommand(ColumnFieldList, PKeyFieldList.size()) + ");";
     }
 
     /**
@@ -44,14 +38,8 @@ public class SQLStringCreator {
      */
     public static String CreateRowString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder createCommand = new StringBuilder("insert into " + table_name + "(");
-        //System.out.println("Table Name: " + table_name + "\n");
-
-        // Appends field names and amount in values(?,?,....) in correct format
-        createCommand.append(AddRowCommand(CreateFieldLists.AllColumnsFieldList(clazz)));
-
-        System.out.println(createCommand);
-        return String.valueOf(createCommand);
+        return "insert into " + table_name + "("
+                + AddRowCommand(CreateFieldLists.AllColumnsFieldList(clazz));
     }
 
     /**
@@ -61,8 +49,7 @@ public class SQLStringCreator {
      */
     public static String ReadString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder readCommand = new StringBuilder("select * from " + table_name + ";");
-        return String.valueOf(readCommand);
+        return "select * from " + table_name + ";";
     }
 
     /**
@@ -72,11 +59,8 @@ public class SQLStringCreator {
      */
     public static String ReadByPKeyString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder readCommand = new StringBuilder("select * from " + table_name + " ");
-
-        readCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
-        System.out.println(readCommand);
-        return String.valueOf(readCommand);
+        return "select * from " + table_name + " "
+                + PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz));
     }
 
     /**
@@ -87,13 +71,9 @@ public class SQLStringCreator {
      */
     public static String UpdateString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder updateCommand = new StringBuilder("update " + table_name + " set ");
-
-        updateCommand.append(ColumnUpdateCommand(CreateFieldLists.ColumnFieldList(clazz)));
-        updateCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
-
-        System.out.println(updateCommand);
-        return String.valueOf(updateCommand);
+        return "update " + table_name + " set "
+                + ColumnUpdateCommand(CreateFieldLists.ColumnFieldList(clazz))
+                + PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz));
     }
 
     /**
@@ -102,14 +82,9 @@ public class SQLStringCreator {
      * @return - SQL statement to delete rows for the class's PKeys
      */
     public static String DeleteString(Class<?> clazz){
-        // DELETE FROM table_name WHERE condition;
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
-        StringBuilder deleteCommand = new StringBuilder("delete from " + table_name + " ");
-
-        deleteCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
-
-        //System.out.println(deleteCommand);
-        return String.valueOf(deleteCommand);
+        return "delete from " + table_name + " "
+                + PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz));
     }
 
     /**
@@ -124,7 +99,6 @@ public class SQLStringCreator {
         int counter = 0;
         for(Field f: PKeyFieldList) {
             String PKeyName = f.getName().toLowerCase();
-            //System.out.println("\tPKey name: " + PKeyName);
 
             createCommand.append( counter == 0 ? "\t" : "\t, " );
             createCommand.append(PKeyName);
@@ -132,10 +106,10 @@ public class SQLStringCreator {
             String dataType = DataType(f);
             Annotation[] PKeyAnnotation = f.getDeclaredAnnotations();
             for (Annotation annotation : PKeyAnnotation) {
-                PKey primarykey = (PKey) annotation;
-                createCommand.append( primarykey.isSerial() ? " serial" : dataType );
-                createCommand.append( primarykey.isUnique() ? " unique" : "");
-                createCommand.append( primarykey.isNotNull() ? " not null" : "");
+                PKey primaryKey = (PKey) annotation;
+                createCommand.append( primaryKey.isSerial() ? " serial" : dataType );
+                createCommand.append( primaryKey.isUnique() ? " unique" : "");
+                createCommand.append( primaryKey.isNotNull() ? " not null" : "");
                 createCommand.append("\n");
                 counter++;
             }
@@ -225,7 +199,7 @@ public class SQLStringCreator {
         int totalColumns = ColumnFieldList.size();
         for(Field f: ColumnFieldList){
             String columnName = f.getName().toLowerCase();
-            updateCommand.append(columnName + "=?");
+            updateCommand.append(columnName).append("=?");
             updateCommand.append( totalColumns > 1 ? ", " : " " );
             totalColumns--;
         }
@@ -244,7 +218,7 @@ public class SQLStringCreator {
         int totalColumns = PKeyFieldList.size();
         for(Field f: PKeyFieldList){
             String columnName = f.getName().toLowerCase();
-            updateCommand.append(columnName + "=?");
+            updateCommand.append(columnName).append("=?");
             updateCommand.append( totalColumns > 1 ? "and " : ";" );
             totalColumns--;
         }
@@ -258,7 +232,6 @@ public class SQLStringCreator {
      */
     public static String DataType(Field field){
         String fieldType = field.getType().getSimpleName();
-        //System.out.println("\t\tData Type: " + fieldType);
         switch(fieldType){
             case "int": return " int";
             case "double": return " numeric";

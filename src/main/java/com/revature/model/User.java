@@ -121,6 +121,6 @@ public class User {
                 ", age=" + age +
                 ", phone_number=" + phone_number +
                 ", isAlive=" + is_alive +
-                '}';
+                "}\n";
     }
 }

@@ -1,28 +1,23 @@
 package com.revature.persistence;
 
-import com.revature.annotations.Column;
 import com.revature.annotations.PKey;
 import com.revature.util.*;
 
-import javax.xml.transform.Result;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class GenericDao<T>{
 
     /**
      * Creates a table for a generic class in the database. The TABLE NAME is <class name lower case>_table with the
      * Primary Keys columns with annotation of PKey and the rest of the columns with the annotation of Column.
-     * @param clazz - takes in any Field of a class.
+     * @param clazz - Any generic class.
      */
-    public void createTable(T clazz){
-        // Create Table Method
-        String createTable = SQLStringCreator.CreateTableString(clazz.getClass());
+    public void createTable(Class<?> clazz){
+        String createTable = SQLStringCreator.CreateTableString(clazz);
         try(Connection connection = ConnectionCreator.getInstance()) {
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(createTable);
@@ -30,22 +25,24 @@ public class GenericDao<T>{
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.out.println(createTable);
     }
 
     /**
      * Creates a table for the generic class of the field if it doesn't exist. Then it creates a row with the given
      * values from the field in the database. All fields with annotations of PKey and Column are set using the info
      * from the field unless the PKey is serial.
-     * @param clazz - takes in any Field of a class.
+     * @param t - Any instance of a generic class.
      */
-    public void createRow(T clazz){
-        createTable(clazz);
+    public void createRow(T t){
+        Class<?> tClass = t.getClass();
+        createTable(tClass);
 
-        String createRow = SQLStringCreator.CreateRowString(clazz.getClass());
+        String createRow = SQLStringCreator.CreateRowString(tClass);
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(createRow);
-            stmt = RowPrepStatement(clazz, stmt);
+            stmt = RowPrepStatement(t, stmt);
             stmt.executeUpdate();
             System.out.println(stmt);
         }catch (Exception e){
@@ -53,33 +50,39 @@ public class GenericDao<T>{
         }
     }
 
-    // Read
-    public List<T> Read(T clazz){
+    /**
+     * Read
+     * @param clazz - Any generic class.
+     * @return - List of all instances of a generic class in the database.
+     */
+    public List<T> Read(Class<?> clazz){
         List<T> output = new ArrayList<>();
 
-        // Creates SQL generic string
-        String Read = SQLStringCreator.ReadString(clazz.getClass());
+        String Read = SQLStringCreator.ReadString(clazz);
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Read);
             System.out.println(stmt);
 
             ResultSet rs = stmt.executeQuery();
-            int i = 1;
             while(rs.next()){
-                System.out.println(rs.getObject(i));
+                output.add(SetValues(rs, clazz));
             }
         }catch (Exception e){
             e.printStackTrace();
         }
+        System.out.println(output);
         return output;
     }
 
-    // Read... Get by PKeys
-    // PKeys ids are always ints.
-    public Field ReadByPKey(T clazz, List<Integer> ids){
-        String Read = SQLStringCreator.ReadByPKeyString(clazz.getClass());
-        Field retrieving = null;
+    /**
+     * @param clazz - Any generic class.
+     * @param ids - List of ids of all PKeys in class.
+     * @return - An instance of a generic class in the database with the specified PKeys of value ids.
+     */
+    public T ReadByPKey(Class<?> clazz, List<Integer> ids){
+        String Read = SQLStringCreator.ReadByPKeyString(clazz);
+        T retrieving = null;
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Read);
@@ -90,37 +93,29 @@ public class GenericDao<T>{
             ResultSet rs = stmt.executeQuery();
             System.out.println(rs.toString());
             if(rs.next()){
-
                 retrieving = SetValues(rs, clazz);
-                //T t = null;
-                //List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
-
-                /*person.setPersonID(rs.getInt(1));
-                person.setFirstName(rs.getString(2));
-                person.setLastName(rs.getString(3));*/
             }
         }catch(Exception e){
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
         System.out.println(retrieving);
         return retrieving;
     }
 
     // Update
-    public void update(T clazz){
-        String Update = SQLStringCreator.UpdateString(clazz.getClass());
+    public void update(T t){
+        String Update = SQLStringCreator.UpdateString(t.getClass());
         // Does Columns first
         // Does PKey second
     }
 
     /**
      * Deletes all rows with PKey ids in the form of a List of Integers for the generic class of the input field.
-     * @param clazz - takes in any Field of a class.
-     * @param ids - List of ids (of all PKeys in class)
+     * @param clazz - Any generic class.
+     * @param ids - List of ids of all PKeys in the generic class.
      */
-    public void delete(T clazz, List<Integer> ids){
-        String Delete = SQLStringCreator.DeleteString(clazz.getClass());
-        // Does PKey
+    public void delete(Class<?> clazz, List<Integer> ids){
+        String Delete = SQLStringCreator.DeleteString(clazz);
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Delete);
@@ -134,16 +129,21 @@ public class GenericDao<T>{
         }
     }
 
-    public PreparedStatement RowPrepStatement(T clazz, PreparedStatement stmt){
-        List<Field> AColumnFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
+    /**
+     * Gives the completed SQL Prepared Statement to create a row for the instance "t" of a generic class. If the
+     * PKey is serial we do not want to have those values inputted into the database so those are skipped.
+     * @param t - Any instance of a generic class.
+     * @param stmt - The prepared statement to create a row in for the generic class of t.
+     * @return - The Prepared Statement with the values inserted into where question marks were before.
+     */
+    public PreparedStatement RowPrepStatement(T t, PreparedStatement stmt){
+        List<Field> AColumnFieldList = CreateFieldLists.AllColumnsFieldList(t.getClass());
 
         int index = 1;
         for(Field f: AColumnFieldList) {
             String columnName = f.getName().toLowerCase();
             boolean isSerial = false;
-            //System.out.println("\tField : " + columnName);
 
-            // if PKey is serial we don't set that number...
             Annotation[] annotations = f.getDeclaredAnnotations();
             for (Annotation annotation : annotations) {
                 if (annotation instanceof PKey) {
@@ -151,7 +151,7 @@ public class GenericDao<T>{
                 }
             }
             if(!isSerial){
-                stmt = InputValues(stmt, clazz, columnName, index);
+                stmt = InputValues(stmt, t, columnName, index);
                 index ++;
             }
         }
@@ -160,59 +160,61 @@ public class GenericDao<T>{
     }
 
     /**
-     * Inputs the info from the given field of Column of name "name" of any type into the given
-     * Prepared Statement (stmt) at the index of the question mark in the current stmt.
-     * @param stmt - Prepared Statement to create a row
-     * @param clazz - Field of generic class
-     * @param name - Column name
-     * @param index - Index of Prepared Statement ?
-     * @return
+     * @param stmt - Prepared Statement to create a row.
+     * @param t - Any instance of a generic class.
+     * @param name - Column name in the generic class.
+     * @param index - Index of Prepared Statement Question Mark.
+     * @return - returns the Prepared statement with the value of t for column of name "name" replacing the
+     *           question mark at index "index".
      */
-    public PreparedStatement InputValues(PreparedStatement stmt, T clazz, String name, int index){
+    public PreparedStatement InputValues(PreparedStatement stmt, T t, String name, int index){
         Field field = null;
         try {
-            field = clazz.getClass().getDeclaredField(name);
+            field = t.getClass().getDeclaredField(name);
             field.setAccessible(true);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        assert field != null;
         String fieldType = field.getType().getSimpleName();
-
-        switch(fieldType) {
-            case "int":
-                try {
-                    stmt.setInt(index, (int) field.get(clazz));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            case "double":
-                try {
-                    stmt.setDouble(index, (double) field.get(clazz));
-                }catch(Exception e){
-                    System.out.println(e);
-                }
-                break;
-            case "String":
-                try {
-                    stmt.setString(index, (String) field.get(clazz));
-                }catch(Exception e){
-                    System.out.println(e);
-                }
-                break;
-            case "boolean":
-                try {
-                    stmt.setBoolean(index, (boolean) field.get(clazz));
-                }catch(Exception e){
-                    System.out.println(e);
-                }
-                break;
+        try {
+            switch (fieldType) {
+                case "int":
+                    stmt.setInt(index, (int) field.get(t.getClass()));
+                    break;
+                case "double":
+                    stmt.setDouble(index, (double) field.get(t));
+                    break;
+                case "String":
+                    stmt.setString(index, (String) field.get(t));
+                    break;
+                case "boolean":
+                    stmt.setBoolean(index, (boolean) field.get(t));
+                    break;
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
         }
         return stmt;
     }
 
-    // works just I'm an idiot and was trying to look at an id that didn't exist any more.
-    public Field SetValues(ResultSet resultSet, T clazz) {
+    /**
+     * @param resultSet - The current result set.
+     * @param clazz - Any generic class.
+     * @return - Returns an instance of a generic class with all information within retrieved from the result set and
+     *           in the correct format.
+     */
+    public T SetValues(ResultSet resultSet, Class<?> clazz) {
+        Constructor<?> constructor = Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(x->x.getParameterCount() == 0).findFirst().orElse(null);
+        assert constructor != null;
+        constructor.setAccessible(true);
+        T t = null;
+        try {
+            t = (T) constructor.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         int rs_number = 0;
         ResultSetMetaData rs_info = null;
         try {
@@ -221,49 +223,36 @@ public class GenericDao<T>{
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        Field field = null;
         for(int i = 1; i <= rs_number; i++) {
+            Field field = null;
             try {
-                System.out.println(resultSet.getObject(i));
-                field = clazz.getClass().getDeclaredField(rs_info.getColumnName(i));
+                field = clazz.getDeclaredField(rs_info.getColumnName(i));
                 field.setAccessible(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            assert field != null;
             String fieldType = field.getType().getSimpleName();
-
-            switch (fieldType) {
-                case "int":
-                    try {
-                        field.set(clazz, resultSet.getInt(i));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                case "double":
-                    try {
-                        field.set(clazz, resultSet.getDouble(i));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                case "String":
-                    try {
-                        field.set(clazz, resultSet.getString(i));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                case "boolean":
-                    try {
-                        field.set(clazz, resultSet.getBoolean(i));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
+            try {
+                switch (fieldType) {
+                    case "int":
+                        field.set(t, resultSet.getInt(i));
+                        break;
+                    case "double":
+                        field.set(t, resultSet.getDouble(i));
+                        break;
+                    case "String":
+                        field.set(t, resultSet.getString(i));
+                        break;
+                    case "boolean":
+                        field.set(t, resultSet.getBoolean(i));
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        return field;
+        return t;
     }
 
 }

@@ -41,37 +41,4 @@ public class ListAll {
             }
         }
     }
-
-    /**
-     * Printing out all the methods that have annotations and the annotation details.
-     * @param clazz - Generic class
-     */
-    /*public static void ListAllAnnotatedMethods(Class<?> clazz){
-        System.out.println("Printing annotated methods of: " + clazz.getSimpleName());
-        Method[] methods = clazz.getMethods();
-        if(methods.length == 0){
-            System.out.println("\tThere are no annotated methods in: " + clazz.getSimpleName());
-        } else {
-            for(Method method: methods){
-                // Just getting those with annotations
-                if(Arrays.toString(method.getDeclaredAnnotations()) != "[]") {
-                    System.out.println("\tMethod name: " + method.getName());
-                    System.out.println("\tReturn type: " + method.getReturnType());
-
-                    Annotation[] annotations = method.getDeclaredAnnotations();
-                    for(Annotation annotation : annotations){
-                        if(annotation instanceof Getter){
-                            System.out.println("\tColumn Name: " + ((Getter) annotation).columnName());
-                            System.out.println("\tGetter Annotation");
-                        }
-                        if(annotation instanceof Setter){
-                            System.out.println("\tColumn Name: " + ((Setter) annotation).columnName());
-                            System.out.println("\tSetter Annotation");
-                        }
-                    }
-                    System.out.println();
-                }
-            }
-        }
-    }*/
 }
