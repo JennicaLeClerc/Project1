@@ -88,7 +88,7 @@ public class GenericDao<T>{
             }
             System.out.println(stmt);
             ResultSet rs = stmt.executeQuery();
-            System.out.println(rs);
+            System.out.println(rs.toString());
             if(rs.next()){
 
                 retrieving = SetValues(rs, clazz);
@@ -211,6 +211,7 @@ public class GenericDao<T>{
         return stmt;
     }
 
+    // works just I'm an idiot and was trying to look at an id that didn't exist any more.
     public Field SetValues(ResultSet resultSet, T clazz) {
         int rs_number = 0;
         ResultSetMetaData rs_info = null;
@@ -222,8 +223,6 @@ public class GenericDao<T>{
         }
         Field field = null;
         for(int i = 1; i <= rs_number; i++) {
-
-
             try {
                 System.out.println(resultSet.getObject(i));
                 field = clazz.getClass().getDeclaredField(rs_info.getColumnName(i));
@@ -263,7 +262,6 @@ public class GenericDao<T>{
                     }
                     break;
             }
-            System.out.println(field);
         }
         return field;
     }

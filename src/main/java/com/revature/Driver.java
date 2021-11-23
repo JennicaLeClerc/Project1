@@ -31,7 +31,7 @@ public class Driver {
         final GenericDao genericDao = new GenericDao();
 
         //genericDao.createRow(user);
-        List<Integer> list = Arrays.asList(1);
+        List<Integer> list = Arrays.asList(3);
         //genericDao.delete(user, list);
         genericDao.Read(user);
         genericDao.ReadByPKey(user,list);
