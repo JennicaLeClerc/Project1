@@ -4,11 +4,10 @@ import com.revature.annotations.Column;
 import com.revature.annotations.PKey;
 import com.revature.util.*;
 
+import javax.xml.transform.Result;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -66,6 +65,10 @@ public class GenericDao<T>{
             System.out.println(stmt);
 
             ResultSet rs = stmt.executeQuery();
+            int i = 1;
+            while(rs.next()){
+                System.out.println(rs.getObject(i));
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -74,19 +77,23 @@ public class GenericDao<T>{
 
     // Read... Get by PKeys
     // PKeys ids are always ints.
-    public T ReadByPKey(T clazz, List<Integer> ids){
+    public Field ReadByPKey(T clazz, List<Integer> ids){
         String Read = SQLStringCreator.ReadByPKeyString(clazz.getClass());
-        T retrieving = null;
+        Field retrieving = null;
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Read);
-            for(int i = 1; i < ids.size(); i++){
-                stmt.setInt(i, ids.get(i));
+            for(int i = 1; i <= ids.size(); i++){
+                stmt.setInt(i, ids.get(i-1));
             }
+            System.out.println(stmt);
             ResultSet rs = stmt.executeQuery();
+            System.out.println(rs);
             if(rs.next()){
-                T t = null;
-                List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
+
+                retrieving = SetValues(rs, clazz);
+                //T t = null;
+                //List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
 
                 /*person.setPersonID(rs.getInt(1));
                 person.setFirstName(rs.getString(2));
@@ -95,6 +102,7 @@ public class GenericDao<T>{
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
+        System.out.println(retrieving);
         return retrieving;
     }
 
@@ -151,6 +159,15 @@ public class GenericDao<T>{
 
     }
 
+    /**
+     * Inputs the info from the given field of Column of name "name" of any type into the given
+     * Prepared Statement (stmt) at the index of the question mark in the current stmt.
+     * @param stmt - Prepared Statement to create a row
+     * @param clazz - Field of generic class
+     * @param name - Column name
+     * @param index - Index of Prepared Statement ?
+     * @return
+     */
     public PreparedStatement InputValues(PreparedStatement stmt, T clazz, String name, int index){
         Field field = null;
         try {
@@ -192,6 +209,63 @@ public class GenericDao<T>{
                 break;
         }
         return stmt;
+    }
+
+    public Field SetValues(ResultSet resultSet, T clazz) {
+        int rs_number = 0;
+        ResultSetMetaData rs_info = null;
+        try {
+            rs_info = resultSet.getMetaData();
+            rs_number = rs_info.getColumnCount();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        Field field = null;
+        for(int i = 1; i <= rs_number; i++) {
+
+
+            try {
+                System.out.println(resultSet.getObject(i));
+                field = clazz.getClass().getDeclaredField(rs_info.getColumnName(i));
+                field.setAccessible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String fieldType = field.getType().getSimpleName();
+
+            switch (fieldType) {
+                case "int":
+                    try {
+                        field.set(clazz, resultSet.getInt(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "double":
+                    try {
+                        field.set(clazz, resultSet.getDouble(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "String":
+                    try {
+                        field.set(clazz, resultSet.getString(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "boolean":
+                    try {
+                        field.set(clazz, resultSet.getBoolean(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
+            System.out.println(field);
+        }
+        return field;
     }
 
 }
