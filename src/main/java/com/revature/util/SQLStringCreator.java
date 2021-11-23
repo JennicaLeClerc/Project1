@@ -31,7 +31,7 @@ public class SQLStringCreator {
         // Appends all Primary Keys and the rest of the Columns to command
         createCommand.append(PKeyCreateCommand(PKeyFieldList));
         createCommand.append(ColumnCreateCommand(ColumnFieldList, PKeyFieldList.size()));
-        createCommand.append(");\n");
+        createCommand.append(");");
         System.out.println(createCommand);
         return String.valueOf(createCommand);
     }
@@ -55,11 +55,22 @@ public class SQLStringCreator {
     }
 
     /**
+     * Creates an SQL string for a generic class (clazz) to write out all rows for a given class.
+     * @param clazz - takes in any class.
+     * @return - SQL statement to write out all rows for a given class.
+     */
+    public static String ReadString(Class<?> clazz){
+        String table_name = clazz.getSimpleName().toLowerCase() + "_table";
+        StringBuilder readCommand = new StringBuilder("select * from " + table_name + ";");
+        return String.valueOf(readCommand);
+    }
+
+    /**
      * Creates an SQL string for a generic class (clazz) to get the row with the specific PKeys.
      * @param clazz - takes in any class.
      * @return - SQL statement to write out all rows for a generic column for a given class.
      */
-    public static String ReadString(Class<?> clazz){
+    public static String ReadByPKeyString(Class<?> clazz){
         String table_name = clazz.getSimpleName().toLowerCase() + "_table";
         StringBuilder readCommand = new StringBuilder("select * from " + table_name + " ");
 
@@ -79,7 +90,7 @@ public class SQLStringCreator {
         StringBuilder updateCommand = new StringBuilder("update " + table_name + " set ");
 
         updateCommand.append(ColumnUpdateCommand(CreateFieldLists.ColumnFieldList(clazz)));
-        updateCommand.append(PKeyWhereCommand(CreateFieldLists.ColumnFieldList(clazz)));
+        updateCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
 
         System.out.println(updateCommand);
         return String.valueOf(updateCommand);
@@ -97,7 +108,7 @@ public class SQLStringCreator {
 
         deleteCommand.append(PKeyWhereCommand(CreateFieldLists.PKeyFieldList(clazz)));
 
-        System.out.println(deleteCommand);
+        //System.out.println(deleteCommand);
         return String.valueOf(deleteCommand);
     }
 
@@ -115,7 +126,7 @@ public class SQLStringCreator {
             String PKeyName = f.getName().toLowerCase();
             //System.out.println("\tPKey name: " + PKeyName);
 
-            createCommand.append( counter == 0 ? "\t" : "\t," );
+            createCommand.append( counter == 0 ? "\t" : "\t, " );
             createCommand.append(PKeyName);
 
             String dataType = DataType(f);
@@ -146,7 +157,7 @@ public class SQLStringCreator {
             String ColumnName = f.getName().toLowerCase();
             //System.out.println("\tColumn name: " + ColumnName);
 
-            createCommand.append( number_PK > 0 ? "\t," : "\t");
+            createCommand.append( number_PK > 0 ? "\t, " : "\t");
             createCommand.append(ColumnName);
 
             String dataType = DataType(f);

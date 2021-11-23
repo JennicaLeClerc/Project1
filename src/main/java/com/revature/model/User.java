@@ -4,7 +4,6 @@ import com.revature.annotations.*;
 public class User {
     @PKey
     public int user_id; // Primary Key
-
     @Column(isUnique = true)
     public String username;
     @Column

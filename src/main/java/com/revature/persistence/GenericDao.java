@@ -19,7 +19,7 @@ public class GenericDao<T>{
     /**
      * Creates a table for a generic class in the database. The TABLE NAME is <class name lower case>_table with the
      * Primary Keys columns with annotation of PKey and the rest of the columns with the annotation of Column.
-     * @param clazz - takes in any instance of a class.
+     * @param clazz - takes in any Field of a class.
      */
     public void createTable(T clazz){
         // Create Table Method
@@ -33,35 +33,65 @@ public class GenericDao<T>{
         }
     }
 
-    // Create Row for Class T
+    /**
+     * Creates a table for the generic class of the field if it doesn't exist. Then it creates a row with the given
+     * values from the field in the database. All fields with annotations of PKey and Column are set using the info
+     * from the field unless the PKey is serial.
+     * @param clazz - takes in any Field of a class.
+     */
     public void createRow(T clazz){
-        // Create Table, if doesn't exist
         createTable(clazz);
-        PreparedStatement stmt = null;
 
-        // Creates SQL generic string
-        // Just assuming PKeys are serializable
         String createRow = SQLStringCreator.CreateRowString(clazz.getClass());
         try(Connection connection = ConnectionCreator.getInstance()){
-            stmt = connection.prepareStatement(createRow);
             assert connection != null;
-
+            PreparedStatement stmt = connection.prepareStatement(createRow);
             stmt = RowPrepStatement(clazz, stmt);
             stmt.executeUpdate();
+            System.out.println(stmt);
         }catch (Exception e){
             e.printStackTrace();
         }
-        System.out.println(stmt);
     }
 
-    // Read... Get by PKey
-    public T Read(T clazz){
+    // Read
+    public List<T> Read(T clazz){
+        List<T> output = new ArrayList<>();
+
+        // Creates SQL generic string
         String Read = SQLStringCreator.ReadString(clazz.getClass());
+        try(Connection connection = ConnectionCreator.getInstance()){
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(Read);
+            System.out.println(stmt);
+
+            ResultSet rs = stmt.executeQuery();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return output;
+    }
+
+    // Read... Get by PKeys
+    // PKeys ids are always ints.
+    public T ReadByPKey(T clazz, List<Integer> ids){
+        String Read = SQLStringCreator.ReadByPKeyString(clazz.getClass());
         T retrieving = null;
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Read);
+            for(int i = 1; i < ids.size(); i++){
+                stmt.setInt(i, ids.get(i));
+            }
             ResultSet rs = stmt.executeQuery();
+            if(rs.next()){
+                T t = null;
+                List<Field> AllColumnsFieldList = CreateFieldLists.AllColumnsFieldList(clazz.getClass());
+
+                /*person.setPersonID(rs.getInt(1));
+                person.setFirstName(rs.getString(2));
+                person.setLastName(rs.getString(3));*/
+            }
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
@@ -75,10 +105,25 @@ public class GenericDao<T>{
         // Does PKey second
     }
 
-    // Delete
-    public void delete(T clazz){
+    /**
+     * Deletes all rows with PKey ids in the form of a List of Integers for the generic class of the input field.
+     * @param clazz - takes in any Field of a class.
+     * @param ids - List of ids (of all PKeys in class)
+     */
+    public void delete(T clazz, List<Integer> ids){
         String Delete = SQLStringCreator.DeleteString(clazz.getClass());
         // Does PKey
+        try(Connection connection = ConnectionCreator.getInstance()){
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(Delete);
+            for(int i = 0; i < ids.size(); i++){
+                stmt.setInt(i+1, ids.get(i));
+            }
+            stmt.executeUpdate();
+            System.out.println(stmt);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     public PreparedStatement RowPrepStatement(T clazz, PreparedStatement stmt){
