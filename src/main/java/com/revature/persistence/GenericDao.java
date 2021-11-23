@@ -34,7 +34,7 @@ public class GenericDao<T>{
      * from the field unless the PKey is serial.
      * @param t - Any instance of a generic class.
      */
-    public void createRow(T t){
+    public T createRow(T t){
         Class<?> tClass = t.getClass();
         createTable(tClass);
 
@@ -43,11 +43,20 @@ public class GenericDao<T>{
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(createRow);
             stmt = RowPrepStatement(t, stmt);
-            stmt.executeUpdate();
             System.out.println(stmt);
+            if(stmt.executeUpdate() == 0){
+                throw new SQLException("Create user failed, no rows affected");
+            }
+
+            try(ResultSet rs = stmt.getGeneratedKeys()){
+                if(rs.next()){
+                    return SetPKeys(rs, t);
+                }
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -107,17 +116,18 @@ public class GenericDao<T>{
      * instance is updated based on its PKeys.
      * @param t - Any instance of a generic class.
      */
-    public void update(T t){
+    public T update(T t){
         String Update = SQLStringCreator.UpdateString(t.getClass());
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(Update);
             stmt = UpdatePrepStatement(t, stmt);
-            stmt.executeUpdate();
             System.out.println(stmt);
+            return stmt.executeUpdate() != 0 ? t : null;
         }catch (Exception e){
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -125,7 +135,7 @@ public class GenericDao<T>{
      * @param clazz - Any generic class.
      * @param ids - List of ids of all PKeys in the generic class.
      */
-    public void delete(Class<?> clazz, List<Integer> ids){
+    public boolean delete(Class<?> clazz, List<Integer> ids){
         String Delete = SQLStringCreator.DeleteString(clazz);
         try(Connection connection = ConnectionCreator.getInstance()){
             assert connection != null;
@@ -133,11 +143,12 @@ public class GenericDao<T>{
             for(int i = 0; i < ids.size(); i++){
                 stmt.setInt(i+1, ids.get(i));
             }
-            stmt.executeUpdate();
             System.out.println(stmt);
+            return stmt.executeUpdate() != 0;
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
+        return false;
     }
 
     /**
@@ -288,5 +299,26 @@ public class GenericDao<T>{
         return t;
     }
 
+    public T SetPKeys(ResultSet resultSet, T t){
+        int rs_number = 0;
+        ResultSetMetaData rs_info = null;
+        try {
+            rs_info = resultSet.getMetaData();
+            rs_number = rs_info.getColumnCount();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        for(int i = 1; i <= rs_number; i++) {
+            Field field = null;
+            try {
+                field = t.getClass().getDeclaredField(rs_info.getColumnName(i));
+                field.setAccessible(true);
+                field.set(t, resultSet.getInt(i));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return t;
+    }
 }
 
