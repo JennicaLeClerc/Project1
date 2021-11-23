@@ -7,7 +7,7 @@
     <!-- base package -->
     <groupId>com.revature</groupId>
     <!-- name of project / identifier for it -->
-    <artifactId>Project1</artifactId>
+    <artifactId>Project1_ORM</artifactId>
     <!-- version -->
     <version>1</version>
 
