@@ -64,7 +64,7 @@ public class GenericDao<T>{
      * @param clazz - Any generic class.
      * @return - List of all instances of a generic class in the database.
      */
-    public List<T> Read(Class<?> clazz){
+    public List<T> read(Class<?> clazz){
         List<T> output = new ArrayList<>();
 
         String Read = SQLStringCreator.ReadString(clazz);
@@ -90,7 +90,7 @@ public class GenericDao<T>{
      * @param ids - List of ids of all PKeys in class.
      * @return - An instance of a generic class in the database with the specified PKeys of value ids.
      */
-    public T ReadByPKey(Class<?> clazz, List<Integer> ids){
+    public T readByPKey(Class<?> clazz, List<Integer> ids){
         String Read = SQLStringCreator.ReadByPKeyString(clazz);
         T retrieving = null;
         try(Connection connection = ConnectionCreator.getInstance()){
