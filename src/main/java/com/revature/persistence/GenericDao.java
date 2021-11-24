@@ -144,7 +144,7 @@ public class GenericDao<T>{
                 stmt.setInt(i+1, ids.get(i));
             }
             System.out.println(stmt);
-            return stmt.executeUpdate() != 0;
+            return stmt.executeUpdate() == 0;
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
