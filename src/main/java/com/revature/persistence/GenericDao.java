@@ -50,9 +50,10 @@ public class GenericDao<T>{
 
             try(ResultSet rs = stmt.getGeneratedKeys()){
                 if(rs.next()){
-                    return SetPKeys(rs, t);
+                    t = SetPKeys(rs, t);
                 }
             }
+            return t;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -143,8 +144,9 @@ public class GenericDao<T>{
             for(int i = 0; i < ids.size(); i++){
                 stmt.setInt(i+1, ids.get(i));
             }
+
             System.out.println(stmt);
-            return stmt.executeUpdate() == 0;
+            return stmt.executeUpdate() != 0;
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
@@ -309,7 +311,7 @@ public class GenericDao<T>{
             e.printStackTrace();
         }
         for(int i = 1; i <= rs_number; i++) {
-            Field field = null;
+            Field field;
             try {
                 field = t.getClass().getDeclaredField(rs_info.getColumnName(i));
                 field.setAccessible(true);
